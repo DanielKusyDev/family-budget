@@ -22,12 +22,8 @@ extend-ignore =
     D100
 
 exclude =
-    app/models/__init__.py
-    migrations/*
+    deploy/*
     .gitignore
 
 per-file-ignores =
-    app/*:D100
-    app/schemas/*:D100,D106
     tests/*:D
-    app/api/routes/*:D103
