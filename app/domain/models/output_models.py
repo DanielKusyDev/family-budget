@@ -21,3 +21,7 @@ class Budget(Model):
 
 class BudgetListElement(Model):
     name: str
+
+
+class User(Model):
+    email: str
