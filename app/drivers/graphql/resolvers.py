@@ -1,10 +1,11 @@
 from typing import cast
 
-from sqlalchemy import and_
+from sqlalchemy import and_, desc
 from strawberry.types import Info
 
 from app.domain.models.output_models import BudgetListElement, User, Budget
 from app.domain.services.budget_services import BudgetListView, BudgetInsertCommand, BudgetDetailsView
+from app.domain.services.transaction_services import TransactionInsertCommand, CategoryInsertCommand
 from app.domain.services.user_services import SignUpCommand, SignInDbCommand, UserAuthenticationView
 from app.drivers.graphql.schemas import (
     BudgetListElementSchema,
@@ -13,6 +14,8 @@ from app.drivers.graphql.schemas import (
     SignInForm,
     UserToken,
     BudgetDetailsSchema,
+    TransactionInputSchema,
+    CategoryInputSchema,
 )
 from app.infra.database.repos import SqlAlchemyListRepo, MssqlQuery, SqlAlchemyInsertRepo, SqlAlchemyDetailsRepo
 from app.infra.database.tables import budget, user, user_to_budget, transaction, category
@@ -94,7 +97,7 @@ async def sign_up(info: Info, user_data: SignInForm) -> UserToken:
     return await sign_in(info, user_data)
 
 
-async def create_budget(info: Info, budget_name: str, access_token: str) -> None:
+async def create_budget(info: Info, budget_name: str, access_token: str) -> int:
     connection = info.context["connection"]
     user_data = await _get_user(access_token)
     budget_query = MssqlQuery(budget).get(budget.c.name, budget_name)
@@ -106,3 +109,32 @@ async def create_budget(info: Info, budget_name: str, access_token: str) -> None
             budget_to_user_insert_repo=SqlAlchemyInsertRepo(connection, user_to_budget),
         )
         await budget_command.create({"name": budget_name})
+    return budget_command.pk
+
+
+async def add_transaction(info: Info, input_data: TransactionInputSchema, access_token: str) -> int:
+    connection = info.context["connection"]
+    with connection.begin():
+        command = TransactionInsertCommand(
+            insert_repo=SqlAlchemyInsertRepo(connection=connection, table=transaction),
+            details_repo=SqlAlchemyDetailsRepo(
+                connection=connection,
+                query=MssqlQuery(transaction).paginate(page=1, size=1).order_by(desc(transaction.c.id)),
+            ),
+        )
+        await command.create(input_data.__dict__)
+    return command.pk
+
+
+async def add_category(info: Info, input_data: CategoryInputSchema, access_token: str) -> None:
+    connection = info.context["connection"]
+    with connection.begin():
+        command = CategoryInsertCommand(
+            insert_repo=SqlAlchemyInsertRepo(connection=connection, table=category),
+            details_repo=SqlAlchemyDetailsRepo(
+                connection=connection,
+                query=MssqlQuery(category).paginate(page=1, size=1).order_by(desc(category.c.id)),
+            ),
+        )
+        await command.create(input_data.__dict__)
+    return command.pk

@@ -1,19 +1,27 @@
 from app import Map
 from app.domain.ports.api_ports import InsertCommand
-from app.domain.ports.spi_ports import InsertRepo
+from app.domain.ports.spi_ports import InsertRepo, DetailsRepo
 
 
 class TransactionInsertCommand(InsertCommand):
-    def __init__(self, transaction_repo: InsertRepo) -> None:
-        self._transaction_repo = transaction_repo
+    def __init__(self, insert_repo: InsertRepo, details_repo: DetailsRepo) -> None:
+        self._insert_repo = insert_repo
+        self._details_repo = details_repo
+        self.pk = None
 
     async def create(self, data: Map) -> None:
-        await self._transaction_repo.insert(data)
+        await self._insert_repo.insert(data)
+        transaction = await self._details_repo.fetch_one()
+        self.pk = transaction["id"]
 
 
 class CategoryInsertCommand(InsertCommand):
-    def __init__(self, category_repo: InsertRepo) -> None:
-        self._category_repo = category_repo
+    def __init__(self, insert_repo: InsertRepo, details_repo: DetailsRepo) -> None:
+        self._insert_repo = insert_repo
+        self._details_repo = details_repo
+        self.pk = None
 
     async def create(self, data: Map) -> None:
-        await self._category_repo.insert(data)
+        await self._insert_repo.insert(data)
+        category = await self._details_repo.fetch_one()
+        self.pk = category["id"]

@@ -81,7 +81,9 @@ class Query:
 class Mutation:
     sign_up: UserToken = strawberry.mutation(resolver=resolvers.sign_up)
     sign_in: UserToken = strawberry.mutation(resolver=resolvers.sign_in)
-    create_budget = strawberry.mutation(resolver=resolvers.create_budget)
+    create_budget: int = strawberry.mutation(resolver=resolvers.create_budget)
+    add_transaction: int = strawberry.mutation(resolver=resolvers.add_transaction)
+    add_category: int = strawberry.mutation(resolver=resolvers.add_category)
 
 
 app = fastapi.FastAPI()

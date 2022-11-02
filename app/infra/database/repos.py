@@ -4,7 +4,7 @@ from icontract import require, invariant
 from sqlalchemy import Column, func
 from sqlalchemy.future import select, Connection
 from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, UnaryExpression
 
 from app import Map
 from app.config import settings
@@ -18,6 +18,7 @@ class MssqlQuery(StorageQuery):
         self._where: list[BinaryExpression] = []
         self._select_from = table
         self._select = [table]
+        self._fixed_select = []
         self._limit: int | None = None
         self._offset = 0
         self._order_by = {self._table.c.id}
@@ -25,13 +26,21 @@ class MssqlQuery(StorageQuery):
     @property
     def query(self) -> Select:
         return (
-            select(*self._select)
+            select(*self._select, *self._fixed_select)
             .where(*self._where)
             .select_from(self._select_from)
             .limit(self._limit)
             .offset(self._offset)
             .order_by(*self._order_by)
         )
+
+    def order_by(self, *columns: Column | UnaryExpression) -> "MssqlQuery":
+        self._order_by = columns
+        return self
+
+    def override_select(self, *columns: Column) -> "MssqlQuery":
+        self._select = columns
+        return self
 
     def add_filters(self, filters: Map) -> "MssqlQuery":
         self._where += [self._table.c.get(field) == value for field, value in filters.items()]
@@ -48,11 +57,11 @@ class MssqlQuery(StorageQuery):
         return self
 
     @require(lambda page: page > 0, description="Page must be greater than 0.")
-    def paginate(self, page: int) -> "MssqlQuery":
-        self._limit = settings.DEFAULT_PAGE_SIZE
+    def paginate(self, page: int, size: int = settings.DEFAULT_PAGE_SIZE) -> "MssqlQuery":
+        self._limit = size
         self._limit = cast(int, self._limit)
         self._offset = (page - 1) * self._limit
-        self._select.append(func.count().over().label("total_count"))
+        self._fixed_select.append(func.count().over().label("total_count"))
         return self
 
     def join(self, table: SqlTable, on: BinaryExpression, outer: bool = False) -> "MssqlQuery":
