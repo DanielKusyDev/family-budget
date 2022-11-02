@@ -3,9 +3,9 @@ from datetime import datetime
 import pytest
 from pytest_mock import MockFixture
 
-from app.domain.adapters import InMemoryRepoFactory
+from app.domain.adapters import InMemoryRepoFactory, IMDB, InMemoryInsertRepo
 from app.domain.models.output_models import Budget, Transaction, Category, BudgetListElement, User
-from app.domain.ports.spi_ports import ListRepo, DetailsRepo
+from app.domain.ports.spi_ports import ListRepo, DetailsRepo, InsertRepo
 from app.domain.services.budget_services import BudgetDetailsView, BudgetListView, BudgetInsertCommand
 
 _DTTM = datetime(year=2022, month=11, day=1, hour=11, minute=4, second=44)
@@ -69,9 +69,15 @@ def detailed_budget_repo() -> ListRepo:
         }
     ).create_list_repo("budget")
 
+
 @pytest.fixture(scope="module")
 def budget_insert_details_repo() -> DetailsRepo:
     return InMemoryRepoFactory({"budget": _BUDGETS}).create_details_repo("budget", key=_BUDGETS[0]["id"])
+
+
+@pytest.fixture
+def insert_repo(in_memory_db: IMDB) -> InsertRepo:
+    return InMemoryRepoFactory(in_memory_db).create_insert_repo("budget")
 
 
 async def test_budget_details_repo(detailed_budget_repo: ListRepo) -> None:
@@ -120,17 +126,17 @@ async def test_budget_list_repo(simple_budgets_repo: ListRepo) -> None:
     assert view.total_count == 3
 
 
-async def test_budget_insert_command(budget_insert_details_repo: DetailsRepo, mocker: MockFixture) -> None:
+async def test_budget_insert_command(
+    budget_insert_details_repo: DetailsRepo, in_memory_db: IMDB, insert_repo: InsertRepo
+) -> None:
     user = User(id=1, created_at=_DTTM, email="Daniel.Kusy@liamg.moc")
-    budget_insert_repo = mocker.AsyncMock()
-    budget_to_user_insert_repo = mocker.AsyncMock()
     command = BudgetInsertCommand(
         user=user,
-        budget_insert_repo=budget_insert_repo,
+        budget_insert_repo=insert_repo,
         budget_details_repo=budget_insert_details_repo,
-        budget_to_user_insert_repo=budget_to_user_insert_repo,
+        budget_to_user_insert_repo=insert_repo,
     )
     await command.create(_BUDGETS[0])
     assert command.pk == _BUDGETS[0]["id"]
-    budget_insert_repo.insert.assert_called_once_with(_BUDGETS[0])
-    budget_to_user_insert_repo.insert.assert_called_once_with({"budget_id": _BUDGETS[0]["id"], "user_id": user.id})
+    assert _BUDGETS[0] in in_memory_db["budget"]
+    assert {"budget_id": _BUDGETS[0]["id"], "user_id": user.id} in in_memory_db["budget"]
