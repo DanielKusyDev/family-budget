@@ -38,7 +38,7 @@ services:
     environment:
       SECRET_KEY: ${SECRET_KEY}
       DB_CONNECTION_STRING: "mssql+pyodbc://sa:MssqlPassWord2022@mssql-express:1433/budget?driver=ODBC+Driver+17+for+SQL+Server&Encrypt=No"
-      DEFAULT_PAGE_SIZE: 3
+      DEFAULT_PAGE_SIZE: 50
       DEBUG: "false"
     networks:
       budget-network:

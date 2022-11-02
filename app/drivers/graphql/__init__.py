@@ -84,7 +84,7 @@ class Mutation:
     create_budget: int = strawberry.mutation(resolver=resolvers.create_budget)
     add_transaction: int = strawberry.mutation(resolver=resolvers.add_transaction)
     add_category: int = strawberry.mutation(resolver=resolvers.add_category)
-    import_budget: int = strawberry.mutation(resolver=resolvers.import_budget)
+    import_budget = strawberry.mutation(resolver=resolvers.import_budget)
 
 
 app = fastapi.FastAPI()

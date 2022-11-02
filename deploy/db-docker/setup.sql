@@ -41,7 +41,7 @@ CREATE TABLE [user]
     id         INT IDENTITY PRIMARY KEY,
     created_at DATETIME NOT NULL,
     email      VARCHAR(255) NOT NULL UNIQUE,
-    password   VARCHAR(100) NOT NULL UNIQUE
+    password   VARCHAR(100) NOT NULL
 )
 GO
 

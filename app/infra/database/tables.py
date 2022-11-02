@@ -23,7 +23,7 @@ class SqlTable(Table):
 user = SqlTable(
     "user",
     Column("email", String(255), unique=True, nullable=False),
-    Column("password", String(100), unique=True, nullable=False),
+    Column("password", String(100), nullable=False),
 )
 
 budget = SqlTable(
