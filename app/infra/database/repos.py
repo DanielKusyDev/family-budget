@@ -18,10 +18,10 @@ class MssqlQuery(StorageQuery):
         self._where: list[BinaryExpression] = []
         self._select_from = table
         self._select = [table]
-        self._fixed_select = []
+        self._fixed_select = []  # type: ignore
         self._limit: int | None = None
         self._offset = 0
-        self._order_by = {self._table.c.id}
+        self._order_by = [self._table.c.id]
 
     @property
     def query(self) -> Select:
@@ -35,11 +35,11 @@ class MssqlQuery(StorageQuery):
         )
 
     def order_by(self, *columns: Column | UnaryExpression) -> "MssqlQuery":
-        self._order_by = columns
+        self._order_by = columns  # type: ignore
         return self
 
     def override_select(self, *columns: Column) -> "MssqlQuery":
-        self._select = columns
+        self._select = columns  # type: ignore
         return self
 
     def add_filters(self, filters: Map) -> "MssqlQuery":

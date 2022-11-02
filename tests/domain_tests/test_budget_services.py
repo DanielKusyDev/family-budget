@@ -1,9 +1,8 @@
 from datetime import datetime
 
 import pytest
-from pytest_mock import MockFixture
 
-from app.domain.adapters import InMemoryRepoFactory, IMDB, InMemoryInsertRepo
+from app.domain.adapters import InMemoryRepoFactory, IMDB
 from app.domain.models.output_models import Budget, Transaction, Category, BudgetListElement, User
 from app.domain.ports.spi_ports import ListRepo, DetailsRepo, InsertRepo
 from app.domain.services.budget_services import BudgetDetailsView, BudgetListView, BudgetInsertCommand

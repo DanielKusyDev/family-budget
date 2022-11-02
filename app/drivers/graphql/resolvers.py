@@ -23,7 +23,9 @@ from app.infra.database.tables import budget, user, user_to_budget, transaction,
 
 async def _get_user(access_token: str) -> User:
     user_view = UserAuthenticationView(access_token)
-    return await user_view.authenticate()
+    if not user_view:
+        raise PermissionError("Forbidden.")
+    return cast(User, await user_view.authenticate())
 
 
 async def get_budget_details(info: Info, budget_id: int, access_token: str) -> BudgetDetailsSchema:
@@ -109,7 +111,7 @@ async def create_budget(info: Info, budget_name: str, access_token: str) -> int:
             budget_to_user_insert_repo=SqlAlchemyInsertRepo(connection, user_to_budget),
         )
         await budget_command.create({"name": budget_name})
-    return budget_command.pk
+    return cast(int, budget_command.pk)
 
 
 async def add_transaction(info: Info, input_data: TransactionInputSchema, access_token: str) -> int:
@@ -123,7 +125,7 @@ async def add_transaction(info: Info, input_data: TransactionInputSchema, access
             ),
         )
         await command.create(input_data.__dict__)
-    return command.pk
+    return cast(int, command.pk)
 
 
 async def add_category(info: Info, input_data: CategoryInputSchema, access_token: str) -> None:

@@ -1,3 +1,5 @@
+from typing import cast
+
 from app import Map
 from app.domain.ports.api_ports import InsertCommand
 from app.domain.ports.spi_ports import InsertRepo, DetailsRepo
@@ -11,7 +13,7 @@ class TransactionInsertCommand(InsertCommand):
 
     async def create(self, data: Map) -> None:
         await self._insert_repo.insert(data)
-        transaction = await self._details_repo.fetch_one()
+        transaction = cast(Map, await self._details_repo.fetch_one())
         self.pk = transaction["id"]
 
 
@@ -23,5 +25,5 @@ class CategoryInsertCommand(InsertCommand):
 
     async def create(self, data: Map) -> None:
         await self._insert_repo.insert(data)
-        category = await self._details_repo.fetch_one()
+        category = cast(Map, await self._details_repo.fetch_one())
         self.pk = category["id"]

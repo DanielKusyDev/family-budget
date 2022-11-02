@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from app import Map
 from app.domain.models import Model
+from app.domain.models.output_models import User
 
 
 class DetailsView(ABC):
@@ -18,7 +19,7 @@ class ListView(ABC):
 
 class AuthenticationView(ABC):
     @abstractmethod
-    async def authenticate(self) -> bool:
+    async def authenticate(self) -> User | None:
         raise NotImplementedError
 
 
