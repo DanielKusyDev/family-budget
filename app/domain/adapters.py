@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from app import Map
-from app.domain.ports.spi_ports import DetailsRepo, ListRepo
+from app.domain.ports.spi_ports import DetailsRepo, ListRepo, InsertRepo
 
 IMDB = dict[str, list[Map]]
 default_db: IMDB = defaultdict(list)
@@ -37,6 +37,16 @@ class InMemoryListRepo(ListRepo):
         return data
 
 
+class InMemoryInsertRepo(InsertRepo):
+    _db: IMDB
+
+    def __init__(self, entity: str) -> None:
+        self._entity = entity
+
+    async def insert(self, data: Map) -> None:
+        self._db[self._entity].append(data)
+
+
 class InMemoryRepoFactory:
     def __init__(self, database: IMDB) -> None:
         self._database = database
@@ -48,5 +58,10 @@ class InMemoryRepoFactory:
 
     def create_list_repo(self, entity: str, filters: Map | None = None) -> InMemoryListRepo:
         repo = InMemoryListRepo(entity, filters)
+        repo._db = self._database
+        return repo
+
+    def create_insert_repo(self, entity: str) -> InsertRepo:
+        repo = InMemoryInsertRepo(entity)
         repo._db = self._database
         return repo
