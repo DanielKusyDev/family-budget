@@ -4,7 +4,12 @@ from sqlalchemy import and_, desc
 from strawberry.types import Info
 
 from app.domain.models.output_models import BudgetListElement, User, Budget
-from app.domain.services.budget_services import BudgetListView, BudgetInsertCommand, BudgetDetailsView
+from app.domain.services.budget_services import (
+    BudgetListView,
+    BudgetInsertCommand,
+    BudgetDetailsView,
+    BudgetImportCommand,
+)
 from app.domain.services.transaction_services import TransactionInsertCommand, CategoryInsertCommand
 from app.domain.services.user_services import SignUpCommand, SignInDbCommand, UserAuthenticationView
 from app.drivers.graphql.schemas import (
@@ -140,3 +145,12 @@ async def add_category(info: Info, input_data: CategoryInputSchema, access_token
         )
         await command.create(input_data.__dict__)
     return command.pk
+
+
+async def import_budget(info: Info, budget_id: int, access_token: str) -> None:
+    user_data = await _get_user(access_token)
+    connection = info.context["connection"]
+    with connection.begin():
+        repo = SqlAlchemyInsertRepo(connection, user_to_budget)
+        command = BudgetImportCommand(repo)
+        await command.create({"budget_id": budget_id, "user_id": user_data.id})

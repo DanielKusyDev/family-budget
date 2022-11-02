@@ -130,3 +130,11 @@ class BudgetInsertCommand(InsertCommand):
         budget = cast(Map, await self._budget_details_repo.fetch_one())
         await self._budget_to_user_insert_repo.insert({"budget_id": budget["id"], "user_id": self._user.id})
         self.pk = budget["id"]
+
+
+class BudgetImportCommand(InsertCommand):
+    def __init__(self, user_to_budget_repo: InsertRepo) -> None:
+        self._repo = user_to_budget_repo
+
+    async def create(self, data: Map) -> None:
+        await self._repo.insert(data)
