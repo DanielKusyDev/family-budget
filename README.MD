@@ -29,6 +29,8 @@ export DB_CONNECTION_STRING=<ODBC_CONNECTION_STRING> # see docker-compose for de
 uvicorn app.drivers.graphql:app --port 8000 --host 127.0.0.1
 ```
 
+You can see the page by visiting http://localhost:8000/graphql
+
 For systems other than ubuntu please see refer to official Microsoft guide on ODBC installation:
 
 https://learn.microsoft.com/en-us/sql/connect/odbc/microsoft-odbc-driver-for-sql-server?view=sql-server-ver15
