@@ -1,0 +1,53 @@
+---
+version: "3.9"
+services:
+  mssql-express:
+    build: mssql-express-docker
+    environment:
+      DATABASE_NAME: budget
+      SA_PASSWORD: MssqlPassWord2022
+      ACCEPT_EULA: Y
+      MSSQL_PID: Express
+    ports:
+      - "1432:1433"
+    container_name: mssql-app
+    volumes:
+      - db_snapshots:/snapshots
+    networks:
+      budget-network:
+  setup-db:
+    build: db-docker
+    environment:
+      SA_PASSWORD: MssqlPassWord2022
+      SQL_SERVER: mssql-express
+      SQL_SERVER_PORT: 1433
+      SQL_DATABASE: budget
+      SQL_USERNAME: sa
+      SQL_PASSWORD: MssqlPassWord2022
+    container_name: setup-db
+    networks:
+      budget-network:
+  app:
+    depends_on:
+      - setup-db
+    build:
+      context: ..
+      dockerfile: ./deploy/app-docker/Dockerfile
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DB_CONNECTION_STRING: "mssql+pyodbc://sa:MssqlPassWord2022@mssql-express:1433/budget?driver=ODBC+Driver+17+for+SQL+Server&Encrypt=No"
+      DEFAULT_PAGE_SIZE: 3
+      DEBUG: "false"
+    networks:
+      budget-network:
+    ports:
+      - "8000:8000"
+    volumes:
+      - type: bind
+        source: ../
+        target: /container-code
+volumes:
+  db_snapshots:
+
+networks:
+  budget-network:
