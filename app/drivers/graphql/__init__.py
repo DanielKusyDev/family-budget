@@ -17,7 +17,7 @@ from strawberry.types import ExecutionResult, Info
 from app import Map
 from app.domain.services.user_services import UserAuthenticationView
 from app.drivers.graphql import resolvers
-from app.drivers.graphql.schemas import Page, BudgetListElementSchema, UserToken
+from app.drivers.graphql.schemas import Page, BudgetListElementSchema, UserToken, BudgetDetailsSchema
 from app.infra.database import get_connection
 
 
@@ -68,7 +68,11 @@ class IsAuthenticated(BasePermission):
 @strawberry.type
 class Query:
     budgets: Page[list[BudgetListElementSchema]] = strawberry.field(
-        resolver=resolvers.budgets_list,
+        resolver=resolvers.get_budgets_list,
+        permission_classes=[IsAuthenticated]
+    )
+    budget: BudgetDetailsSchema = strawberry.field(
+        resolver=resolvers.get_budget_details,
         permission_classes=[IsAuthenticated]
     )
 

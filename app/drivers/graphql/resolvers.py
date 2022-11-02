@@ -3,12 +3,19 @@ from typing import cast
 from sqlalchemy import and_
 from strawberry.types import Info
 
-from app.domain.models.output_models import BudgetListElement, User
-from app.domain.services.budget_services import BudgetListView, BudgetInsertCommand
+from app.domain.models.output_models import BudgetListElement, User, Budget
+from app.domain.services.budget_services import BudgetListView, BudgetInsertCommand, BudgetDetailsView
 from app.domain.services.user_services import SignUpCommand, SignInDbCommand, UserAuthenticationView
-from app.drivers.graphql.schemas import BudgetListElementSchema, Page, FilterSchema, SignInForm, UserToken
+from app.drivers.graphql.schemas import (
+    BudgetListElementSchema,
+    Page,
+    FilterSchema,
+    SignInForm,
+    UserToken,
+    BudgetDetailsSchema,
+)
 from app.infra.database.repos import SqlAlchemyListRepo, MssqlQuery, SqlAlchemyInsertRepo, SqlAlchemyDetailsRepo
-from app.infra.database.tables import budget, user, user_to_budget
+from app.infra.database.tables import budget, user, user_to_budget, transaction, category
 
 
 async def _get_user(access_token: str) -> User:
@@ -16,7 +23,42 @@ async def _get_user(access_token: str) -> User:
     return await user_view.authenticate()
 
 
-async def budgets_list(
+async def get_budget_details(info: Info, budget_id: int, access_token: str) -> BudgetDetailsSchema:
+    user_data = await _get_user(access_token)
+    query = (
+        MssqlQuery(budget)
+        .get_by_id(budget_id)
+        .join(user_to_budget, and_(user_to_budget.c.budget_id == budget.c.id, user_to_budget.c.user_id == user_data.id))
+        .join(transaction, transaction.c.budget_id == budget.c.id, outer=True)
+        .join(category, category.c.id == transaction.c.category_id, outer=True)
+        .override_select(
+            budget.c.id.label("budget_id"),
+            budget.c.name.label("budget_name"),
+            budget.c.created_at.label("budget_created_at"),
+            transaction.c.id.label("transaction_id"),
+            transaction.c.created_at.label("transaction_created_at"),
+            transaction.c.amount.label("transaction_amount"),
+            transaction.c.description.label("transaction_description"),
+            category.c.id.label("category_id"),
+            category.c.created_at.label("category_created_at"),
+            category.c.name.label("category_name"),
+            category.c.description.label("category_description"),
+        )
+    )
+    repo = SqlAlchemyListRepo(connection=info.context["connection"], query=query)
+    view = BudgetDetailsView(repo)
+    budget_data = cast(Budget, await view.get_one())
+    return BudgetDetailsSchema(
+        id=budget_data.id,
+        created_at=budget_data.created_at,
+        name=budget_data.name,
+        incomes=budget_data.incomes,
+        expenses=budget_data.expenses,
+        balance=budget_data.balance,
+    )
+
+
+async def get_budgets_list(
     info: Info, page: int, access_token: str, filters: list[FilterSchema] | None = None
 ) -> Page[list[BudgetListElementSchema]]:
     user_data = await _get_user(access_token)
