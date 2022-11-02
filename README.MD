@@ -5,6 +5,7 @@ left side of the hex, when the MSSQL database serves as a main infrastructure se
 ## Installation
 
 ```shell
+export SECRET_KEY=secret
 docker-compose -f deploy/docker-compose.yml build
 docker-compose -f deploy/docker-compose.yml up -d
 ```
@@ -23,7 +24,8 @@ ACCEPT_EULA=Y apt-get install --no-install-recommends -y \
         unixodbc
 curl -sSL https://install.python-poetry.org | python -
 poetry install --with dev
-EXPORT DB_CONNECTION_STRING=<ODBC_CONNECTION_STRING> # see docker-compose for default string for provided DB service
+export SECRET_KEY=secret
+export DB_CONNECTION_STRING=<ODBC_CONNECTION_STRING> # see docker-compose for default string for provided DB service
 uvicorn app.drivers.graphql:app --port 8000 --host 127.0.0.1
 ```
 

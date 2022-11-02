@@ -10,12 +10,14 @@ services:
       MSSQL_PID: Express
     ports:
       - "1432:1433"
-    container_name: mssql-app
+    container_name: mssql-express
     volumes:
       - db_snapshots:/snapshots
     networks:
       budget-network:
   setup-db:
+    depends_on:
+      - mssql-express
     build: db-docker
     environment:
       SA_PASSWORD: MssqlPassWord2022
